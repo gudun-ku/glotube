@@ -1,4 +1,8 @@
 "use strict";
+import {
+  YOUTUBE_API_KEY,
+  YOUTUBE_OAUTH_ID
+} from "./consts.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   //экранная клавиатура
@@ -260,12 +264,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // youtube
   {
-    const API_KEY = "AIzaSyDpKRXbPRvCsQTpZyqyjkh8IvFA4UZNq_4";
-    const CLIENT_ID =
-      "883498136040-ri4decsv1s2hche9lpo2dc86njl2kjrb.apps.googleusercontent.com";
 
     // авторизация
-
     {
       const buttonAuth = document.getElementById("authorize");
       const authBlock = document.querySelector(".auth");
@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       gapi.load("client:auth2", () => {
         gapi.auth2.init({
-          client_id: CLIENT_ID
+          client_id: YOUTUBE_OAUTH_ID
         });
       });
 
@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       const loadClient = () => {
-        gapi.client.setApiKey(API_KEY);
+        gapi.client.setApiKey(YOUTUBE_API_KEY);
         return gapi.client
           .load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
           .then(() => {
