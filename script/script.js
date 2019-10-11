@@ -1,8 +1,5 @@
 "use strict";
-import {
-  YOUTUBE_API_KEY,
-  YOUTUBE_OAUTH_ID
-} from "./consts.js";
+import { YOUTUBE_API_KEY, YOUTUBE_OAUTH_ID } from "./consts.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   //экранная клавиатура
@@ -264,7 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // youtube
   {
-
     // авторизация
     {
       const buttonAuth = document.getElementById("authorize");
@@ -314,16 +310,63 @@ document.addEventListener("DOMContentLoaded", () => {
       const gloTube = document.querySelector(".logo-academy");
       const trends = document.getElementById("yt_trend");
       const likes = document.getElementById("like");
+      const subscriptions = document.getElementById("yt_subscriptions");
+      const searchForm = document.querySelector(".search-form");
 
       const request = options =>
         gapi.client.youtube[options.method]
-        .list(options)
-        .then(response => response.result.items)
-        .then(render)
-        .then(youtuber)
-        .catch(err =>
-          console.error("Во время запроса произошла ошибка: " + err)
-        );
+          .list(options)
+          .then(response => response.result.items)
+          .then(data =>
+            options.method === "subscriptions" ? renderSub(data) : render(data)
+          )
+          .catch(err =>
+            console.error("Во время запроса произошла ошибка: " + err)
+          );
+
+      const renderSub = data => {
+        console.log(data);
+        const ytWrapper = document.getElementById("yt-wrapper");
+        //clear the div
+        ytWrapper.textContent = "";
+        data.forEach(item => {
+          console.log("sub");
+          try {
+            const {
+              snippet: {
+                resourceId: { channelId },
+                description,
+                title,
+                thumbnails: {
+                  high: { url }
+                }
+              }
+            } = item;
+            ytWrapper.innerHTML += `
+            <div class="yt" data-youtuber="${channelId}">
+              <div class="yt-thumbnail" style="--aspect-ratio:16/9;">
+                <img src="${url}" alt="thumbnail" class="yt-thumbnail__img">
+              </div>
+              <div class="yt-title">${title}</div>
+              <div class="yt-channel">${description}</div>
+            </div>
+            `;
+          } catch (err) {
+            console.error(err);
+          }
+        });
+        ytWrapper.querySelectorAll(".yt").forEach(item => {
+          item.addEventListener("click", () => {
+            request({
+              method: "search",
+              part: "snippet",
+              channelId: item.dataset.youtuber,
+              order: "date",
+              maxResults: 6
+            });
+          });
+        });
+      };
 
       const render = data => {
         console.log(data);
@@ -334,20 +377,14 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const {
               id,
-              id: {
-                videoId
-              },
+              id: { videoId },
               snippet: {
                 channelTitle,
                 title,
                 thumbnails: {
-                  high: {
-                    url
-                  }
+                  high: { url }
                 },
-                resourceId: {
-                  videoId: likedVideoId
-                } = {}
+                resourceId: { videoId: likedVideoId } = {}
               }
             } = item;
             ytWrapper.innerHTML += `
@@ -363,6 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(err);
           }
         });
+        youtuber();
       };
 
       gloTube.addEventListener("click", () => {
@@ -392,6 +430,35 @@ document.addEventListener("DOMContentLoaded", () => {
           playlistId: "LL2t3GzIYbXqA3uCCbLHvyoA",
           maxResults: 6
         });
+      });
+
+      subscriptions.addEventListener("click", () => {
+        request({
+          method: "subscriptions",
+          part: "snippet",
+          mine: true,
+          maxResults: 6
+        });
+      });
+
+      searchForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const valueInput = searchForm.elements[0].value;
+        if (!valueInput) {
+          searchForm.style.border = '1px solid red';
+          return;
+        } else {
+          searchForm.style.border = '';
+        }
+        request({
+          method: "search",
+          q: valueInput,
+          part: "snippet",
+          order: "relevance",
+          maxResults: 6
+        });
+
+        searchForm.elements[0].value = '';
       });
     }
   }
